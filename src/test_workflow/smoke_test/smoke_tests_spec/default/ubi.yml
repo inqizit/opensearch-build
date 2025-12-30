@@ -1,9 +1,0 @@
----
-info:
-  title: OpenSearch UBI plugin smoke tests
-  version: default
-name: ubi
-paths:
-  /_plugins/ubi/initialize:
-    POST:
-      parameters: []

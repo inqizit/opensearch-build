@@ -1,20 +1,13 @@
-# Makefile for OpenSearch Build and Management
+# Makefile for OpenSearch - Self-Sufficient
 # Copyright OpenSearch Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-.PHONY: help start stop restart logs status check clean shell urls
-
-# Path to OpenSearch docker-compose setup
-OPENSEARCH_DIR := docker/release/dockercomposefiles/opensearch-setup/linux
-OPENSEARCH_COMPOSE := $(OPENSEARCH_DIR)/docker-compose.yml
-OPENSEARCH_START_SCRIPT := $(OPENSEARCH_DIR)/start-opensearch.sh
-OPENSEARCH_CHECK_SCRIPT := $(OPENSEARCH_DIR)/check-docker.sh
+.PHONY: help start stop restart logs status check clean shell urls test
 
 # Default target
 help:
-	@echo "OpenSearch Build - Available Commands:"
+	@echo "OpenSearch Management - Available Commands:"
 	@echo ""
-	@echo "OpenSearch Management:"
 	@echo "  make start      - Start OpenSearch cluster (with vm.max_map_count setup)"
 	@echo "  make stop       - Stop OpenSearch cluster"
 	@echo "  make restart   - Restart OpenSearch cluster"
@@ -24,17 +17,18 @@ help:
 	@echo "  make clean      - Stop and remove containers, volumes, and networks"
 	@echo "  make shell      - Open shell in opensearch-node1 container"
 	@echo "  make urls       - Show access URLs and test connectivity"
+	@echo "  make test       - Run test script to verify functionality"
 	@echo ""
 	@echo "Quick Access:"
 	@echo "  OpenSearch UI:    http://localhost:5601"
 	@echo "  OpenSearch API:   http://localhost:9200"
 	@echo "  Default username: admin"
-	@echo "  Default password: Check $(OPENSEARCH_DIR)/.env file"
+	@echo "  Default password: Check .env file"
 
 # Check Docker connectivity before operations
 check:
-	@if [ -f "$(OPENSEARCH_CHECK_SCRIPT)" ]; then \
-		$(OPENSEARCH_CHECK_SCRIPT); \
+	@if [ -f "check-docker.sh" ]; then \
+		./check-docker.sh; \
 	else \
 		echo "Checking Docker connectivity..."; \
 		if docker ps &> /dev/null; then \
@@ -49,30 +43,33 @@ check:
 # Start OpenSearch cluster
 start: check
 	@echo "Starting OpenSearch cluster..."
-	@if [ -f "$(OPENSEARCH_START_SCRIPT)" ]; then \
-		cd $(OPENSEARCH_DIR) && ./start-opensearch.sh; \
+	@if [ -f "start-opensearch.sh" ]; then \
+		./start-opensearch.sh; \
 	else \
 		echo "⚠ start-opensearch.sh not found, using docker-compose directly..."; \
-		cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml up -d; \
+		if [ ! -f .env ]; then \
+			echo "OPENSEARCH_INITIAL_ADMIN_PASSWORD=MySecure123!" > .env; \
+		fi; \
+		docker-compose -f docker-compose.yml up -d; \
 	fi
 
 # Stop OpenSearch cluster
 stop:
 	@echo "Stopping OpenSearch cluster..."
-	@cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml down
+	@docker-compose -f docker-compose.yml down
 
 # Restart OpenSearch cluster
 restart: stop start
 
 # View OpenSearch logs
 logs:
-	@cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml logs -f
+	@docker-compose -f docker-compose.yml logs -f
 
 # Check OpenSearch container status
 status:
 	@echo "OpenSearch Cluster Status:"
 	@echo ""
-	@cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml ps
+	@docker-compose -f docker-compose.yml ps
 	@echo ""
 	@echo "Container Health:"
 	@docker ps --filter "name=opensearch" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
@@ -83,7 +80,7 @@ clean:
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml down -v; \
+		docker-compose -f docker-compose.yml down -v; \
 		echo "✓ Cleaned up OpenSearch resources"; \
 	else \
 		echo "Cancelled."; \
@@ -124,17 +121,28 @@ urls:
 	 fi
 	@echo ""
 	@echo "Default credentials:"
-	@if [ -f "$(OPENSEARCH_DIR)/.env" ]; then \
+	@if [ -f ".env" ]; then \
 		echo "  Username: admin"; \
-		PASSWORD=$$(grep OPENSEARCH_INITIAL_ADMIN_PASSWORD $(OPENSEARCH_DIR)/.env | cut -d'=' -f2); \
+		PASSWORD=$$(grep OPENSEARCH_INITIAL_ADMIN_PASSWORD .env | cut -d'=' -f2); \
 		echo "  Password: $$PASSWORD"; \
 	else \
 		echo "  Username: admin"; \
-		echo "  Password: (check $(OPENSEARCH_DIR)/.env file)"; \
+		echo "  Password: (check .env file)"; \
 	fi
-	@echo ""
-	@echo "If localhost doesn't work from Windows:"
-	@echo "  1. Try: http://127.0.0.1:5601"
-	@echo "  2. Check Windows Firewall settings"
-	@echo "  3. Verify Rancher Desktop port forwarding is enabled"
+
+# Run test script
+test:
+	@if [ -f "test.sh" ]; then \
+		./test.sh; \
+	else \
+		echo "⚠ test.sh not found. Creating a basic test..."; \
+		echo "Testing OpenSearch connectivity..."; \
+		HTTP_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9200 2>/dev/null || echo "000"); \
+		if [ "$$HTTP_CODE" = "200" ] || [ "$$HTTP_CODE" = "401" ]; then \
+			echo "✓ OpenSearch is accessible (HTTP $$HTTP_CODE)"; \
+		else \
+			echo "✗ OpenSearch is not accessible (HTTP $$HTTP_CODE)"; \
+			exit 1; \
+		fi; \
+	fi
 

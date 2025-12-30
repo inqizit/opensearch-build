@@ -1,0 +1,38 @@
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+      - "7000:7000"
+      - "7001:7001"
+      - "7199:7199"
+    environment:
+      CASSANDRA_CLUSTER_NAME: test-cluster
+      CASSANDRA_DC: datacenter1
+      CASSANDRA_RACK: rack1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 100M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - cassandra-net
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q UN"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Cassandra Web UI - optional, can be accessed via cqlsh
+  # For a web UI, you can use DataStax Studio or other tools
+  # For now, we'll use cqlsh for management (available via 'make shell')
+
+networks:
+  cassandra-net:
+    driver: bridge
+
+volumes:
+  cassandra-data:
+

@@ -1,0 +1,28 @@
+services:
+  duckdb:
+    image: python:3.11-slim
+    container_name: duckdb
+    volumes:
+      - duckdb-data:/data
+    networks:
+      - duckdb-net
+    # DuckDB is primarily an embedded database
+    # This container provides Python environment with DuckDB installed
+    command: ["python", "-c", "import duckdb; import time; print('DuckDB ready'); time.sleep(86400)"]
+    environment:
+      - PIP_NO_CACHE_DIR=1
+    # Install duckdb on startup
+    entrypoint: ["/bin/bash", "-c", "pip install -q duckdb && python -c 'import duckdb; import time; print(\"DuckDB ready\"); time.sleep(86400)'"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import duckdb; print(duckdb.__version__)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  duckdb-net:
+    driver: bridge
+
+volumes:
+  duckdb-data:
+

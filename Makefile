@@ -1,5 +1,5 @@
 # Makefile for Multi-Service Build and Management
-# Supports: OpenSearch, Kafka, Redis, MongoDB, PostgreSQL
+# Supports: OpenSearch, Kafka, Redis, MongoDB, PostgreSQL, Cassandra, DuckDB
 
 .PHONY: help start stop restart logs status check clean shell urls test
 .PHONY: opensearch-start opensearch-stop opensearch-restart opensearch-logs opensearch-status opensearch-clean opensearch-shell opensearch-urls opensearch-test
@@ -7,6 +7,8 @@
 .PHONY: redis-start redis-stop redis-restart redis-logs redis-status redis-clean redis-test
 .PHONY: mongo-start mongo-stop mongo-restart mongo-logs mongo-status mongo-clean mongo-test
 .PHONY: postgres-start postgres-stop postgres-restart postgres-logs postgres-status postgres-clean postgres-test
+.PHONY: cassandra-start cassandra-stop cassandra-restart cassandra-logs cassandra-status cassandra-clean cassandra-shell cassandra-test
+.PHONY: duckdb-start duckdb-stop duckdb-restart duckdb-logs duckdb-status duckdb-clean duckdb-shell duckdb-test
 
 # Service directories
 OPENSEARCH_DIR := opensearch/linux
@@ -14,6 +16,8 @@ KAFKA_DIR := kafka
 REDIS_DIR := redis
 MONGO_DIR := mongo
 POSTGRES_DIR := postgres
+CASSANDRA_DIR := cassandra
+DUCKDB_DIR := duckdb
 
 # Default target
 help:
@@ -73,13 +77,39 @@ help:
 	@echo "  make postgres-clean    - Clean PostgreSQL resources"
 	@echo "  make postgres-test     - Test PostgreSQL functionality"
 	@echo ""
+	@echo "Cassandra Management:"
+	@echo "  make cassandra-start    - Start Cassandra"
+	@echo "  make cassandra-stop     - Stop Cassandra"
+	@echo "  make cassandra-restart  - Restart Cassandra"
+	@echo "  make cassandra-logs     - View Cassandra logs"
+	@echo "  make cassandra-status   - Check Cassandra status"
+	@echo "  make cassandra-clean    - Clean Cassandra resources"
+	@echo "  make cassandra-shell    - Open Cassandra CQL shell"
+	@echo "  make cassandra-test     - Test Cassandra functionality"
+	@echo ""
+	@echo "DuckDB Management:"
+	@echo "  make duckdb-start    - Start DuckDB HTTP server"
+	@echo "  make duckdb-stop     - Stop DuckDB"
+	@echo "  make duckdb-restart  - Restart DuckDB"
+	@echo "  make duckdb-logs     - View DuckDB logs"
+	@echo "  make duckdb-status   - Check DuckDB status"
+	@echo "  make duckdb-clean    - Clean DuckDB resources"
+	@echo "  make duckdb-shell    - Open DuckDB CLI shell"
+	@echo "  make duckdb-test     - Test DuckDB functionality"
+	@echo ""
 	@echo "Quick Access URLs:"
 	@echo "  OpenSearch UI:    http://localhost:5601"
 	@echo "  OpenSearch API:   http://localhost:9200"
 	@echo "  Kafka:            localhost:9092"
+	@echo "  Kafka UI:         http://localhost:8080"
 	@echo "  Redis:            localhost:6379"
+	@echo "  Redis Commander:  http://localhost:8081"
 	@echo "  MongoDB:          localhost:27017"
+	@echo "  Mongo Express:    http://localhost:8082"
 	@echo "  PostgreSQL:       localhost:5432"
+	@echo "  pgAdmin:          http://localhost:8083"
+	@echo "  Cassandra:        localhost:9042"
+	@echo "  DuckDB:           Use 'make duckdb-shell' or install locally (pip install duckdb)"
 
 # Check Docker connectivity
 check:
@@ -100,6 +130,8 @@ start: check
 	@$(MAKE) redis-start
 	@$(MAKE) mongo-start
 	@$(MAKE) postgres-start
+	@$(MAKE) cassandra-start
+	@$(MAKE) duckdb-start
 
 # Stop all services
 stop:
@@ -109,6 +141,8 @@ stop:
 	@$(MAKE) redis-stop
 	@$(MAKE) mongo-stop
 	@$(MAKE) postgres-stop
+	@$(MAKE) cassandra-stop
+	@$(MAKE) duckdb-stop
 
 # Restart all services
 restart: stop start
@@ -125,6 +159,10 @@ status:
 	@$(MAKE) mongo-status
 	@echo ""
 	@$(MAKE) postgres-status
+	@echo ""
+	@$(MAKE) cassandra-status
+	@echo ""
+	@$(MAKE) duckdb-status
 
 # Test all services
 test:
@@ -134,6 +172,8 @@ test:
 	@$(MAKE) redis-test
 	@$(MAKE) mongo-test
 	@$(MAKE) postgres-test
+	@$(MAKE) cassandra-test
+	@$(MAKE) duckdb-test
 
 # OpenSearch targets
 opensearch-start:
@@ -250,3 +290,53 @@ postgres-clean:
 
 postgres-test:
 	@cd $(POSTGRES_DIR) && $(MAKE) test
+
+# Cassandra targets
+cassandra-start:
+	@cd $(CASSANDRA_DIR) && $(MAKE) start
+
+cassandra-stop:
+	@cd $(CASSANDRA_DIR) && $(MAKE) stop
+
+cassandra-restart:
+	@cd $(CASSANDRA_DIR) && $(MAKE) restart
+
+cassandra-logs:
+	@cd $(CASSANDRA_DIR) && $(MAKE) logs
+
+cassandra-status:
+	@cd $(CASSANDRA_DIR) && $(MAKE) status
+
+cassandra-clean:
+	@cd $(CASSANDRA_DIR) && $(MAKE) clean
+
+cassandra-shell:
+	@cd $(CASSANDRA_DIR) && $(MAKE) shell
+
+cassandra-test:
+	@cd $(CASSANDRA_DIR) && $(MAKE) test
+
+# DuckDB targets
+duckdb-start:
+	@cd $(DUCKDB_DIR) && $(MAKE) start
+
+duckdb-stop:
+	@cd $(DUCKDB_DIR) && $(MAKE) stop
+
+duckdb-restart:
+	@cd $(DUCKDB_DIR) && $(MAKE) restart
+
+duckdb-logs:
+	@cd $(DUCKDB_DIR) && $(MAKE) logs
+
+duckdb-status:
+	@cd $(DUCKDB_DIR) && $(MAKE) status
+
+duckdb-clean:
+	@cd $(DUCKDB_DIR) && $(MAKE) clean
+
+duckdb-shell:
+	@cd $(DUCKDB_DIR) && $(MAKE) shell
+
+duckdb-test:
+	@cd $(DUCKDB_DIR) && $(MAKE) test

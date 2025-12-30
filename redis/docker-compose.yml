@@ -8,7 +8,7 @@ services:
       - "6379:6379"
     command: redis-server --appendonly yes
     volumes:
-      - redis-data:/data
+      - ../../data/redis:/data
     networks:
       - redis-net
     healthcheck:
@@ -32,7 +32,4 @@ services:
 networks:
   redis-net:
     driver: bridge
-
-volumes:
-  redis-data:
 

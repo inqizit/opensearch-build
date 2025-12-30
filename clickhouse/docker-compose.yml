@@ -1,0 +1,41 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - ../../data/clickhouse/data:/var/lib/clickhouse
+      - ../../data/clickhouse/logs:/var/log/clickhouse-server
+    networks:
+      - clickhouse-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  clickhouse-tabix:
+    image: spoonest/clickhouse-tabix-web-client:latest
+    container_name: clickhouse-tabix
+    depends_on:
+      - clickhouse
+    ports:
+      - "8084:80"
+    environment:
+      CLICKHOUSE_SERVER: clickhouse
+      CLICKHOUSE_PORT: 8123
+    networks:
+      - clickhouse-net
+
+networks:
+  clickhouse-net:
+    driver: bridge
+

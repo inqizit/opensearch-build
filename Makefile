@@ -1,5 +1,5 @@
 # Makefile for Multi-Service Build and Management
-# Supports: OpenSearch, Kafka, Redis, MongoDB, PostgreSQL, Cassandra, DuckDB
+# Supports: OpenSearch, Kafka, Redis, MongoDB, PostgreSQL, Cassandra, DuckDB, Neo4j, ClickHouse
 
 .PHONY: help start stop restart logs status check clean shell urls test
 .PHONY: opensearch-start opensearch-stop opensearch-restart opensearch-logs opensearch-status opensearch-clean opensearch-shell opensearch-urls opensearch-test
@@ -9,6 +9,8 @@
 .PHONY: postgres-start postgres-stop postgres-restart postgres-logs postgres-status postgres-clean postgres-test
 .PHONY: cassandra-start cassandra-stop cassandra-restart cassandra-logs cassandra-status cassandra-clean cassandra-shell cassandra-test
 .PHONY: duckdb-start duckdb-stop duckdb-restart duckdb-logs duckdb-status duckdb-clean duckdb-shell duckdb-test
+.PHONY: neo4j-start neo4j-stop neo4j-restart neo4j-logs neo4j-status neo4j-clean neo4j-shell neo4j-test
+.PHONY: clickhouse-start clickhouse-stop clickhouse-restart clickhouse-logs clickhouse-status clickhouse-clean clickhouse-shell clickhouse-test
 
 # Service directories
 OPENSEARCH_DIR := opensearch/linux
@@ -18,6 +20,8 @@ MONGO_DIR := mongo
 POSTGRES_DIR := postgres
 CASSANDRA_DIR := cassandra
 DUCKDB_DIR := duckdb
+NEO4J_DIR := neo4j
+CLICKHOUSE_DIR := clickhouse
 
 # Default target
 help:
@@ -97,6 +101,26 @@ help:
 	@echo "  make duckdb-shell    - Open DuckDB CLI shell"
 	@echo "  make duckdb-test     - Test DuckDB functionality"
 	@echo ""
+	@echo "Neo4j Management:"
+	@echo "  make neo4j-start    - Start Neo4j"
+	@echo "  make neo4j-stop     - Stop Neo4j"
+	@echo "  make neo4j-restart  - Restart Neo4j"
+	@echo "  make neo4j-logs     - View Neo4j logs"
+	@echo "  make neo4j-status   - Check Neo4j status"
+	@echo "  make neo4j-clean    - Clean Neo4j resources"
+	@echo "  make neo4j-shell    - Open Neo4j Cypher shell"
+	@echo "  make neo4j-test     - Test Neo4j functionality"
+	@echo ""
+	@echo "ClickHouse Management:"
+	@echo "  make clickhouse-start    - Start ClickHouse"
+	@echo "  make clickhouse-stop     - Stop ClickHouse"
+	@echo "  make clickhouse-restart  - Restart ClickHouse"
+	@echo "  make clickhouse-logs     - View ClickHouse logs"
+	@echo "  make clickhouse-status   - Check ClickHouse status"
+	@echo "  make clickhouse-clean    - Clean ClickHouse resources"
+	@echo "  make clickhouse-shell    - Open ClickHouse client"
+	@echo "  make clickhouse-test     - Test ClickHouse functionality"
+	@echo ""
 	@echo "Quick Access URLs:"
 	@echo "  OpenSearch UI:    http://localhost:5601"
 	@echo "  OpenSearch API:   http://localhost:9200"
@@ -110,6 +134,11 @@ help:
 	@echo "  pgAdmin:          http://localhost:8083"
 	@echo "  Cassandra:        localhost:9042"
 	@echo "  DuckDB:           Use 'make duckdb-shell' or install locally (pip install duckdb)"
+	@echo "  Neo4j Browser:    http://localhost:7474"
+	@echo "  Neo4j Bolt:       localhost:7687"
+	@echo "  ClickHouse HTTP:  http://localhost:8123"
+	@echo "  ClickHouse Native: localhost:9000"
+	@echo "  Tabix UI:         http://localhost:8084"
 
 # Check Docker connectivity
 check:
@@ -132,6 +161,8 @@ start: check
 	@$(MAKE) postgres-start
 	@$(MAKE) cassandra-start
 	@$(MAKE) duckdb-start
+	@$(MAKE) neo4j-start
+	@$(MAKE) clickhouse-start
 
 # Stop all services
 stop:
@@ -143,6 +174,8 @@ stop:
 	@$(MAKE) postgres-stop
 	@$(MAKE) cassandra-stop
 	@$(MAKE) duckdb-stop
+	@$(MAKE) neo4j-stop
+	@$(MAKE) clickhouse-stop
 
 # Restart all services
 restart: stop start
@@ -163,6 +196,10 @@ status:
 	@$(MAKE) cassandra-status
 	@echo ""
 	@$(MAKE) duckdb-status
+	@echo ""
+	@$(MAKE) neo4j-status
+	@echo ""
+	@$(MAKE) clickhouse-status
 
 # Test all services
 test:
@@ -174,6 +211,8 @@ test:
 	@$(MAKE) postgres-test
 	@$(MAKE) cassandra-test
 	@$(MAKE) duckdb-test
+	@$(MAKE) neo4j-test
+	@$(MAKE) clickhouse-test
 
 # OpenSearch targets
 opensearch-start:
@@ -340,3 +379,53 @@ duckdb-shell:
 
 duckdb-test:
 	@cd $(DUCKDB_DIR) && $(MAKE) test
+
+# Neo4j targets
+neo4j-start:
+	@cd $(NEO4J_DIR) && $(MAKE) start
+
+neo4j-stop:
+	@cd $(NEO4J_DIR) && $(MAKE) stop
+
+neo4j-restart:
+	@cd $(NEO4J_DIR) && $(MAKE) restart
+
+neo4j-logs:
+	@cd $(NEO4J_DIR) && $(MAKE) logs
+
+neo4j-status:
+	@cd $(NEO4J_DIR) && $(MAKE) status
+
+neo4j-clean:
+	@cd $(NEO4J_DIR) && $(MAKE) clean
+
+neo4j-shell:
+	@cd $(NEO4J_DIR) && $(MAKE) shell
+
+neo4j-test:
+	@cd $(NEO4J_DIR) && $(MAKE) test
+
+# ClickHouse targets
+clickhouse-start:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) start
+
+clickhouse-stop:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) stop
+
+clickhouse-restart:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) restart
+
+clickhouse-logs:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) logs
+
+clickhouse-status:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) status
+
+clickhouse-clean:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) clean
+
+clickhouse-shell:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) shell
+
+clickhouse-test:
+	@cd $(CLICKHOUSE_DIR) && $(MAKE) test

@@ -7,6 +7,7 @@ A comprehensive Docker-based development environment for widely used databases, 
 ### Search & Analytics
 - **OpenSearch** - Search and analytics engine (Elasticsearch alternative)
 - **DuckDB** - In-process analytical database
+- **ClickHouse** - Column-oriented database for real-time analytics
 
 ### Message Queues
 - **Kafka** - Distributed event streaming platform
@@ -16,6 +17,7 @@ A comprehensive Docker-based development environment for widely used databases, 
 - **MongoDB** - NoSQL document database
 - **Cassandra** - Distributed NoSQL database
 - **Redis** - In-memory data structure store
+- **Neo4j** - Graph database
 
 ## Quick Start
 
@@ -33,6 +35,8 @@ make mongo-start
 make cassandra-start
 make redis-start
 make duckdb-start
+make neo4j-start
+make clickhouse-start
 ```
 
 ### Test All Services
@@ -81,6 +85,17 @@ make status
   - Python: `pip install duckdb`
   - Node.js: `npm install duckdb`
 
+### Neo4j
+- **Browser**: http://localhost:7474
+- **Bolt**: localhost:7687
+- **Credentials**: neo4j / password123
+
+### ClickHouse
+- **HTTP API**: http://localhost:8123
+- **Native**: localhost:9000
+- **Tabix UI**: http://localhost:8084
+- **Credentials**: default / (empty)
+
 ## Additional Technologies (Not Included)
 
 ### Cloud-Only Services
@@ -90,10 +105,8 @@ make status
 
 ### Other Popular Technologies to Consider
 - **InfluxDB** - Time-series database
-- **Neo4j** - Graph database
 - **Elasticsearch** - Search engine (similar to OpenSearch)
 - **RabbitMQ** - Message broker (alternative to Kafka)
-- **ClickHouse** - Column-oriented database for analytics
 - **TimescaleDB** - PostgreSQL extension for time-series data
 - **ScyllaDB** - High-performance Cassandra alternative
 - **CouchDB** - Document database
@@ -135,10 +148,33 @@ make kafka-logs
 make status
 ```
 
+## Data Persistence
+
+All service data is stored in the `data/` directory at the repository root:
+- Data persists across container restarts
+- Data is stored locally using bind mounts (not Docker volumes)
+- The `data/` directory is git-ignored and will not be committed
+- To reset a service, delete its data directory and restart the service
+
+### Data Directory Structure
+```
+data/
+├── kafka/          # Kafka and Zookeeper data
+├── postgres/       # PostgreSQL and pgAdmin data
+├── mongo/          # MongoDB data
+├── redis/          # Redis data
+├── cassandra/      # Cassandra data
+├── neo4j/          # Neo4j data, logs, plugins
+├── clickhouse/     # ClickHouse data and logs
+├── duckdb/         # DuckDB database files
+└── opensearch/     # OpenSearch node data
+```
+
 ## Notes
 
 - All services are configured with default credentials for development
-- Data persists in Docker volumes
+- Data persists across restarts in the `data/` directory
 - Each service can be managed independently
 - All services include comprehensive test scripts
+- To completely reset a service: delete its data directory and restart
 

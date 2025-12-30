@@ -3,7 +3,7 @@ services:
     image: python:3.11-slim
     container_name: duckdb
     volumes:
-      - duckdb-data:/data
+      - ../../data/duckdb:/data
     networks:
       - duckdb-net
     # DuckDB is primarily an embedded database
@@ -22,7 +22,4 @@ services:
 networks:
   duckdb-net:
     driver: bridge
-
-volumes:
-  duckdb-data:
 

@@ -15,7 +15,7 @@ services:
       MAX_HEAP_SIZE: 512M
       HEAP_NEWSIZE: 100M
     volumes:
-      - cassandra-data:/var/lib/cassandra
+      - ../../data/cassandra:/var/lib/cassandra
     networks:
       - cassandra-net
     healthcheck:
@@ -32,7 +32,4 @@ services:
 networks:
   cassandra-net:
     driver: bridge
-
-volumes:
-  cassandra-data:
 

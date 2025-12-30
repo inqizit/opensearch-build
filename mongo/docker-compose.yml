@@ -11,7 +11,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password123
       MONGO_INITDB_DATABASE: testdb
     volumes:
-      - mongo-data:/data/db
+      - ../../data/mongo:/data/db
     networks:
       - mongo-net
     healthcheck:
@@ -39,7 +39,4 @@ services:
 networks:
   mongo-net:
     driver: bridge
-
-volumes:
-  mongo-data:
 

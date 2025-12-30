@@ -7,6 +7,9 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    volumes:
+      - ../../data/kafka/zookeeper:/var/lib/zookeeper/data
+      - ../../data/kafka/zookeeper-logs:/var/lib/zookeeper/log
     networks:
       - kafka-net
     healthcheck:
@@ -36,6 +39,8 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       # Explicitly disable KRaft mode to use Zookeeper (empty string forces Zookeeper mode)
       KAFKA_PROCESS_ROLES: ""
+    volumes:
+      - ../../data/kafka/kafka:/var/lib/kafka/data
     networks:
       - kafka-net
     healthcheck:
@@ -62,8 +67,4 @@ services:
 networks:
   kafka-net:
     driver: bridge
-
-volumes:
-  zookeeper-data:
-  kafka-data:
 

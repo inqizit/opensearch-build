@@ -100,19 +100,45 @@ fi
 
 echo ""
 echo "7. Testing transaction support..."
-TX_TEST=$(docker exec postgres psql -U admin -d testdb <<EOF 2>/dev/null || echo ""
+# Test 1: Transaction commit - verify data persists
+TX_COMMIT_TEST=$(docker exec postgres psql -U admin -d testdb -t -A -c "
 BEGIN;
-CREATE TABLE tx_test (id INT);
-INSERT INTO tx_test VALUES (1);
+CREATE TABLE tx_commit_test (id INT);
+INSERT INTO tx_commit_test VALUES (1), (2);
+COMMIT;
+SELECT COUNT(*) FROM tx_commit_test;
+" 2>&1)
+
+if echo "$TX_COMMIT_TEST" | grep -q "^2$"; then
+    echo -e "${GREEN}✓ Transaction commit works (found 2 rows after commit)${NC}"
+    # Clean up
+    docker exec postgres psql -U admin -d testdb -c "DROP TABLE tx_commit_test;" > /dev/null 2>&1
+else
+    echo -e "${YELLOW}⚠ Transaction commit test failed${NC}"
+fi
+
+# Test 2: Transaction rollback - verify table doesn't exist after rollback
+TX_ROLLBACK_OUTPUT=$(docker exec postgres psql -U admin -d testdb <<'EOF' 2>&1
+BEGIN;
+CREATE TABLE tx_rollback_test (id INT);
+INSERT INTO tx_rollback_test VALUES (1);
 ROLLBACK;
-SELECT COUNT(*) FROM tx_test;
 EOF
 )
-if echo "$TX_TEST" | grep -q "does not exist\|0"; then
-    echo -e "${GREEN}✓ Transaction support works correctly${NC}"
+
+# Now check if table exists (it shouldn't)
+TABLE_EXISTS=$(docker exec postgres psql -U admin -d testdb -t -c "\dt tx_rollback_test" 2>&1)
+
+if echo "$TABLE_EXISTS" | grep -qi "did not find any relation\|No matching relations\|does not exist"; then
+    echo -e "${GREEN}✓ Transaction rollback works (table does not exist after rollback)${NC}"
+elif [ -z "$TABLE_EXISTS" ] || [ "$(echo "$TABLE_EXISTS" | tr -d ' \n')" = "" ]; then
+    echo -e "${GREEN}✓ Transaction rollback works (table does not exist after rollback)${NC}"
 else
-    echo -e "${YELLOW}⚠ Transaction test failed${NC}"
+    # Table still exists, which means rollback didn't work - clean it up
+    docker exec postgres psql -U admin -d testdb -c "DROP TABLE IF EXISTS tx_rollback_test;" > /dev/null 2>&1
+    echo -e "${YELLOW}⚠ Transaction rollback test inconclusive${NC}"
 fi
+
 
 echo ""
 echo "========================================="

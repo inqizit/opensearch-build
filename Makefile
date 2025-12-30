@@ -1,140 +1,252 @@
-# Makefile for OpenSearch Build and Management
-# Copyright OpenSearch Contributors
-# SPDX-License-Identifier: Apache-2.0
+# Makefile for Multi-Service Build and Management
+# Supports: OpenSearch, Kafka, Redis, MongoDB, PostgreSQL
 
-.PHONY: help start stop restart logs status check clean shell urls
+.PHONY: help start stop restart logs status check clean shell urls test
+.PHONY: opensearch-start opensearch-stop opensearch-restart opensearch-logs opensearch-status opensearch-clean opensearch-shell opensearch-urls opensearch-test
+.PHONY: kafka-start kafka-stop kafka-restart kafka-logs kafka-status kafka-clean kafka-test
+.PHONY: redis-start redis-stop redis-restart redis-logs redis-status redis-clean redis-test
+.PHONY: mongo-start mongo-stop mongo-restart mongo-logs mongo-status mongo-clean mongo-test
+.PHONY: postgres-start postgres-stop postgres-restart postgres-logs postgres-status postgres-clean postgres-test
 
-# Path to OpenSearch docker-compose setup
-OPENSEARCH_DIR := docker/release/dockercomposefiles/opensearch-setup/linux
-OPENSEARCH_COMPOSE := $(OPENSEARCH_DIR)/docker-compose.yml
-OPENSEARCH_START_SCRIPT := $(OPENSEARCH_DIR)/start-opensearch.sh
-OPENSEARCH_CHECK_SCRIPT := $(OPENSEARCH_DIR)/check-docker.sh
+# Service directories
+OPENSEARCH_DIR := opensearch/linux
+KAFKA_DIR := kafka
+REDIS_DIR := redis
+MONGO_DIR := mongo
+POSTGRES_DIR := postgres
 
 # Default target
 help:
-	@echo "OpenSearch Build - Available Commands:"
+	@echo "Multi-Service Build - Available Commands:"
+	@echo ""
+	@echo "Service Management (all services):"
+	@echo "  make start      - Start all services"
+	@echo "  make stop       - Stop all services"
+	@echo "  make restart   - Restart all services"
+	@echo "  make status     - Check status of all services"
+	@echo "  make test       - Run tests for all services"
 	@echo ""
 	@echo "OpenSearch Management:"
-	@echo "  make start      - Start OpenSearch cluster (with vm.max_map_count setup)"
-	@echo "  make stop       - Stop OpenSearch cluster"
-	@echo "  make restart   - Restart OpenSearch cluster"
-	@echo "  make logs       - View OpenSearch logs (follow mode)"
-	@echo "  make status     - Check OpenSearch container status"
-	@echo "  make check      - Check Docker connectivity"
-	@echo "  make clean      - Stop and remove containers, volumes, and networks"
-	@echo "  make shell      - Open shell in opensearch-node1 container"
-	@echo "  make urls       - Show access URLs and test connectivity"
+	@echo "  make opensearch-start    - Start OpenSearch cluster"
+	@echo "  make opensearch-stop     - Stop OpenSearch cluster"
+	@echo "  make opensearch-restart  - Restart OpenSearch cluster"
+	@echo "  make opensearch-logs     - View OpenSearch logs"
+	@echo "  make opensearch-status   - Check OpenSearch status"
+	@echo "  make opensearch-clean    - Clean OpenSearch resources"
+	@echo "  make opensearch-shell    - Open shell in opensearch-node1"
+	@echo "  make opensearch-urls     - Show OpenSearch URLs"
+	@echo "  make opensearch-test     - Test OpenSearch functionality"
 	@echo ""
-	@echo "Quick Access:"
+	@echo "Kafka Management:"
+	@echo "  make kafka-start    - Start Kafka cluster"
+	@echo "  make kafka-stop     - Stop Kafka cluster"
+	@echo "  make kafka-restart  - Restart Kafka cluster"
+	@echo "  make kafka-logs     - View Kafka logs"
+	@echo "  make kafka-status   - Check Kafka status"
+	@echo "  make kafka-clean    - Clean Kafka resources"
+	@echo "  make kafka-test     - Test Kafka functionality"
+	@echo ""
+	@echo "Redis Management:"
+	@echo "  make redis-start    - Start Redis"
+	@echo "  make redis-stop     - Stop Redis"
+	@echo "  make redis-restart  - Restart Redis"
+	@echo "  make redis-logs     - View Redis logs"
+	@echo "  make redis-status   - Check Redis status"
+	@echo "  make redis-clean    - Clean Redis resources"
+	@echo "  make redis-test     - Test Redis functionality"
+	@echo ""
+	@echo "MongoDB Management:"
+	@echo "  make mongo-start    - Start MongoDB"
+	@echo "  make mongo-stop     - Stop MongoDB"
+	@echo "  make mongo-restart  - Restart MongoDB"
+	@echo "  make mongo-logs     - View MongoDB logs"
+	@echo "  make mongo-status   - Check MongoDB status"
+	@echo "  make mongo-clean    - Clean MongoDB resources"
+	@echo "  make mongo-test     - Test MongoDB functionality"
+	@echo ""
+	@echo "PostgreSQL Management:"
+	@echo "  make postgres-start    - Start PostgreSQL"
+	@echo "  make postgres-stop     - Stop PostgreSQL"
+	@echo "  make postgres-restart  - Restart PostgreSQL"
+	@echo "  make postgres-logs     - View PostgreSQL logs"
+	@echo "  make postgres-status   - Check PostgreSQL status"
+	@echo "  make postgres-clean    - Clean PostgreSQL resources"
+	@echo "  make postgres-test     - Test PostgreSQL functionality"
+	@echo ""
+	@echo "Quick Access URLs:"
 	@echo "  OpenSearch UI:    http://localhost:5601"
 	@echo "  OpenSearch API:   http://localhost:9200"
-	@echo "  Default username: admin"
-	@echo "  Default password: Check $(OPENSEARCH_DIR)/.env file"
+	@echo "  Kafka:            localhost:9092"
+	@echo "  Redis:            localhost:6379"
+	@echo "  MongoDB:          localhost:27017"
+	@echo "  PostgreSQL:       localhost:5432"
 
-# Check Docker connectivity before operations
+# Check Docker connectivity
 check:
-	@if [ -f "$(OPENSEARCH_CHECK_SCRIPT)" ]; then \
-		$(OPENSEARCH_CHECK_SCRIPT); \
+	@echo "Checking Docker connectivity..."
+	@if docker ps &> /dev/null; then \
+		echo "✓ Docker daemon is accessible!"; \
 	else \
-		echo "Checking Docker connectivity..."; \
-		if docker ps &> /dev/null; then \
-			echo "✓ Docker daemon is accessible!"; \
-		else \
-			echo "✗ Cannot connect to Docker daemon"; \
-			echo "  Make sure Docker/Rancher Desktop is running and WSL integration is enabled"; \
-			exit 1; \
-		fi; \
+		echo "✗ Cannot connect to Docker daemon"; \
+		echo "  Make sure Docker/Rancher Desktop is running and WSL integration is enabled"; \
+		exit 1; \
 	fi
 
-# Start OpenSearch cluster
+# Start all services
 start: check
-	@echo "Starting OpenSearch cluster..."
-	@if [ -f "$(OPENSEARCH_START_SCRIPT)" ]; then \
-		cd $(OPENSEARCH_DIR) && ./start-opensearch.sh; \
-	else \
-		echo "⚠ start-opensearch.sh not found, using docker-compose directly..."; \
-		cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml up -d; \
-	fi
+	@echo "Starting all services..."
+	@$(MAKE) opensearch-start
+	@$(MAKE) kafka-start
+	@$(MAKE) redis-start
+	@$(MAKE) mongo-start
+	@$(MAKE) postgres-start
 
-# Stop OpenSearch cluster
+# Stop all services
 stop:
-	@echo "Stopping OpenSearch cluster..."
-	@cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml down
+	@echo "Stopping all services..."
+	@$(MAKE) opensearch-stop
+	@$(MAKE) kafka-stop
+	@$(MAKE) redis-stop
+	@$(MAKE) mongo-stop
+	@$(MAKE) postgres-stop
 
-# Restart OpenSearch cluster
+# Restart all services
 restart: stop start
 
-# View OpenSearch logs
-logs:
-	@cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml logs -f
-
-# Check OpenSearch container status
+# Status of all services
 status:
-	@echo "OpenSearch Cluster Status:"
+	@echo "=== Service Status ==="
+	@$(MAKE) opensearch-status
 	@echo ""
-	@cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml ps
+	@$(MAKE) kafka-status
 	@echo ""
-	@echo "Container Health:"
-	@docker ps --filter "name=opensearch" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+	@$(MAKE) redis-status
+	@echo ""
+	@$(MAKE) mongo-status
+	@echo ""
+	@$(MAKE) postgres-status
 
-# Clean up OpenSearch (stop, remove containers, volumes, networks)
-clean:
-	@echo "⚠ This will remove all OpenSearch containers, volumes, and networks!"
-	@read -p "Are you sure? [y/N] " -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		cd $(OPENSEARCH_DIR) && docker-compose -f docker-compose.yml down -v; \
-		echo "✓ Cleaned up OpenSearch resources"; \
-	else \
-		echo "Cancelled."; \
-	fi
+# Test all services
+test:
+	@echo "Running tests for all services..."
+	@$(MAKE) opensearch-test
+	@$(MAKE) kafka-test
+	@$(MAKE) redis-test
+	@$(MAKE) mongo-test
+	@$(MAKE) postgres-test
 
-# Open shell in opensearch-node1 container
-shell:
-	@docker exec -it opensearch-node1 /bin/bash || \
-	 docker exec -it opensearch-node1 /bin/sh
+# OpenSearch targets
+opensearch-start:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) start
 
-# Show access URLs and test connectivity
-urls:
-	@echo "OpenSearch Access URLs:"
-	@echo ""
-	@echo "From Windows Browser:"
-	@echo "  UI:   http://localhost:5601"
-	@echo "  API:  http://localhost:9200"
-	@echo ""
-	@echo "From WSL:"
-	@WSL_IP=$$(hostname -I | awk '{print $$1}'); \
-	 echo "  UI:   http://$$WSL_IP:5601 or http://localhost:5601"; \
-	 echo "  API:  http://$$WSL_IP:9200 or http://localhost:9200"
-	@echo ""
-	@echo "Testing connectivity from WSL..."
-	@echo -n "  Dashboards (5601): "; \
-	 HTTP_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5601 2>/dev/null || echo "000"); \
-	 if [ "$$HTTP_CODE" = "302" ] || [ "$$HTTP_CODE" = "200" ]; then \
-		 echo "✓ Accessible (HTTP $$HTTP_CODE)"; \
-	 else \
-		 echo "✗ Not accessible (HTTP $$HTTP_CODE)"; \
-	 fi
-	@echo -n "  OpenSearch (9200): "; \
-	 HTTP_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9200 2>/dev/null || echo "000"); \
-	 if [ "$$HTTP_CODE" = "200" ] || [ "$$HTTP_CODE" = "401" ]; then \
-		 echo "✓ Accessible (HTTP $$HTTP_CODE)"; \
-	 else \
-		 echo "✗ Not accessible (HTTP $$HTTP_CODE)"; \
-	 fi
-	@echo ""
-	@echo "Default credentials:"
-	@if [ -f "$(OPENSEARCH_DIR)/.env" ]; then \
-		echo "  Username: admin"; \
-		PASSWORD=$$(grep OPENSEARCH_INITIAL_ADMIN_PASSWORD $(OPENSEARCH_DIR)/.env | cut -d'=' -f2); \
-		echo "  Password: $$PASSWORD"; \
-	else \
-		echo "  Username: admin"; \
-		echo "  Password: (check $(OPENSEARCH_DIR)/.env file)"; \
-	fi
-	@echo ""
-	@echo "If localhost doesn't work from Windows:"
-	@echo "  1. Try: http://127.0.0.1:5601"
-	@echo "  2. Check Windows Firewall settings"
-	@echo "  3. Verify Rancher Desktop port forwarding is enabled"
+opensearch-stop:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) stop
 
+opensearch-restart:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) restart
+
+opensearch-logs:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) logs
+
+opensearch-status:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) status
+
+opensearch-clean:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) clean
+
+opensearch-shell:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) shell
+
+opensearch-urls:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) urls
+
+opensearch-test:
+	@cd $(OPENSEARCH_DIR) && $(MAKE) test
+
+# Kafka targets
+kafka-start:
+	@cd $(KAFKA_DIR) && $(MAKE) start
+
+kafka-stop:
+	@cd $(KAFKA_DIR) && $(MAKE) stop
+
+kafka-restart:
+	@cd $(KAFKA_DIR) && $(MAKE) restart
+
+kafka-logs:
+	@cd $(KAFKA_DIR) && $(MAKE) logs
+
+kafka-status:
+	@cd $(KAFKA_DIR) && $(MAKE) status
+
+kafka-clean:
+	@cd $(KAFKA_DIR) && $(MAKE) clean
+
+kafka-test:
+	@cd $(KAFKA_DIR) && $(MAKE) test
+
+# Redis targets
+redis-start:
+	@cd $(REDIS_DIR) && $(MAKE) start
+
+redis-stop:
+	@cd $(REDIS_DIR) && $(MAKE) stop
+
+redis-restart:
+	@cd $(REDIS_DIR) && $(MAKE) restart
+
+redis-logs:
+	@cd $(REDIS_DIR) && $(MAKE) logs
+
+redis-status:
+	@cd $(REDIS_DIR) && $(MAKE) status
+
+redis-clean:
+	@cd $(REDIS_DIR) && $(MAKE) clean
+
+redis-test:
+	@cd $(REDIS_DIR) && $(MAKE) test
+
+# MongoDB targets
+mongo-start:
+	@cd $(MONGO_DIR) && $(MAKE) start
+
+mongo-stop:
+	@cd $(MONGO_DIR) && $(MAKE) stop
+
+mongo-restart:
+	@cd $(MONGO_DIR) && $(MAKE) restart
+
+mongo-logs:
+	@cd $(MONGO_DIR) && $(MAKE) logs
+
+mongo-status:
+	@cd $(MONGO_DIR) && $(MAKE) status
+
+mongo-clean:
+	@cd $(MONGO_DIR) && $(MAKE) clean
+
+mongo-test:
+	@cd $(MONGO_DIR) && $(MAKE) test
+
+# PostgreSQL targets
+postgres-start:
+	@cd $(POSTGRES_DIR) && $(MAKE) start
+
+postgres-stop:
+	@cd $(POSTGRES_DIR) && $(MAKE) stop
+
+postgres-restart:
+	@cd $(POSTGRES_DIR) && $(MAKE) restart
+
+postgres-logs:
+	@cd $(POSTGRES_DIR) && $(MAKE) logs
+
+postgres-status:
+	@cd $(POSTGRES_DIR) && $(MAKE) status
+
+postgres-clean:
+	@cd $(POSTGRES_DIR) && $(MAKE) clean
+
+postgres-test:
+	@cd $(POSTGRES_DIR) && $(MAKE) test

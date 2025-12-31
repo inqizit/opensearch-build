@@ -1,5 +1,5 @@
 # Makefile for Multi-Service Build and Management
-# Supports: OpenSearch, Kafka, Redis, MongoDB, PostgreSQL, Cassandra, DuckDB, Neo4j, ClickHouse
+# Supports: OpenSearch, Kafka, Redis, MongoDB, PostgreSQL, Cassandra, DuckDB, Neo4j, ClickHouse, MinIO
 
 .PHONY: help start stop restart logs status check clean shell urls test
 .PHONY: opensearch-start opensearch-stop opensearch-restart opensearch-logs opensearch-status opensearch-clean opensearch-shell opensearch-urls opensearch-test
@@ -11,6 +11,7 @@
 .PHONY: duckdb-start duckdb-stop duckdb-restart duckdb-logs duckdb-status duckdb-clean duckdb-shell duckdb-test
 .PHONY: neo4j-start neo4j-stop neo4j-restart neo4j-logs neo4j-status neo4j-clean neo4j-shell neo4j-test
 .PHONY: clickhouse-start clickhouse-stop clickhouse-restart clickhouse-logs clickhouse-status clickhouse-clean clickhouse-shell clickhouse-test
+.PHONY: minio-start minio-stop minio-restart minio-logs minio-status minio-clean minio-test
 
 # Service directories
 OPENSEARCH_DIR := opensearch/linux
@@ -22,6 +23,7 @@ CASSANDRA_DIR := cassandra
 DUCKDB_DIR := duckdb
 NEO4J_DIR := neo4j
 CLICKHOUSE_DIR := clickhouse
+MINIO_DIR := minio
 
 # Default target
 help:
@@ -121,6 +123,15 @@ help:
 	@echo "  make clickhouse-shell    - Open ClickHouse client"
 	@echo "  make clickhouse-test     - Test ClickHouse functionality"
 	@echo ""
+	@echo "MinIO (S3-compatible) Management:"
+	@echo "  make minio-start    - Start MinIO"
+	@echo "  make minio-stop     - Stop MinIO"
+	@echo "  make minio-restart  - Restart MinIO"
+	@echo "  make minio-logs     - View MinIO logs"
+	@echo "  make minio-status   - Check MinIO status"
+	@echo "  make minio-clean    - Clean MinIO resources"
+	@echo "  make minio-test     - Test MinIO functionality"
+	@echo ""
 	@echo "Quick Access URLs:"
 	@echo "  OpenSearch UI:    http://localhost:5601"
 	@echo "  OpenSearch API:   http://localhost:9200"
@@ -139,6 +150,8 @@ help:
 	@echo "  ClickHouse HTTP:  http://localhost:8123"
 	@echo "  ClickHouse Native: localhost:9000"
 	@echo "  Tabix UI:         http://localhost:8084"
+	@echo "  MinIO API:        http://localhost:9000"
+	@echo "  MinIO Console:    http://localhost:9001"
 
 # Check Docker connectivity
 check:
@@ -163,6 +176,7 @@ start: check
 	@$(MAKE) duckdb-start
 	@$(MAKE) neo4j-start
 	@$(MAKE) clickhouse-start
+	@$(MAKE) minio-start
 
 # Stop all services
 stop:
@@ -176,6 +190,7 @@ stop:
 	@$(MAKE) duckdb-stop
 	@$(MAKE) neo4j-stop
 	@$(MAKE) clickhouse-stop
+	@$(MAKE) minio-stop
 
 # Restart all services
 restart: stop start
@@ -200,6 +215,8 @@ status:
 	@$(MAKE) neo4j-status
 	@echo ""
 	@$(MAKE) clickhouse-status
+	@echo ""
+	@$(MAKE) minio-status
 
 # Test all services
 test:
@@ -213,6 +230,7 @@ test:
 	@$(MAKE) duckdb-test
 	@$(MAKE) neo4j-test
 	@$(MAKE) clickhouse-test
+	@$(MAKE) minio-test
 
 # OpenSearch targets
 opensearch-start:
@@ -429,3 +447,25 @@ clickhouse-shell:
 
 clickhouse-test:
 	@cd $(CLICKHOUSE_DIR) && $(MAKE) test
+
+# MinIO targets
+minio-start:
+	@cd $(MINIO_DIR) && $(MAKE) start
+
+minio-stop:
+	@cd $(MINIO_DIR) && $(MAKE) stop
+
+minio-restart:
+	@cd $(MINIO_DIR) && $(MAKE) restart
+
+minio-logs:
+	@cd $(MINIO_DIR) && $(MAKE) logs
+
+minio-status:
+	@cd $(MINIO_DIR) && $(MAKE) status
+
+minio-clean:
+	@cd $(MINIO_DIR) && $(MAKE) clean
+
+minio-test:
+	@cd $(MINIO_DIR) && $(MAKE) test
